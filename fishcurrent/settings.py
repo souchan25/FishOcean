@@ -123,6 +123,13 @@ if database_url:
     elif database_url.startswith("'") and database_url.endswith("'"):
         database_url = database_url[1:-1]
     
+    # Fix HTML entities that might be copied from web interfaces
+    # Common when copying from Neon, Heroku, or other dashboards
+    database_url = database_url.replace('&amp;', '&')
+    database_url = database_url.replace('&lt;', '<')
+    database_url = database_url.replace('&gt;', '>')
+    database_url = database_url.replace('&quot;', '"')
+    
     print(f"Render Debug: Processing DATABASE_URL. Length: {len(database_url)}", file=sys.stderr)
     print(f"Render Debug: Start of URL: {database_url[:15]}...", file=sys.stderr)
 

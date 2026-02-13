@@ -17,8 +17,25 @@ The most common cause of this issue is **using SQLite in production**, which is 
 
 1. **In Render Dashboard**, go to your service's Environment variables
 2. **Add or verify** the `DATABASE_URL` environment variable points to your Neon PostgreSQL database
-   - Format: `postgresql://username:password@host/database`
-   - If using Neon: Get the connection string from your Neon dashboard
+   
+   **CORRECT FORMAT** (plain ampersands):
+   ```
+   postgresql://neondb_owner:password@host.neon.tech/neondb?sslmode=require&channel_binding=require
+   ```
+   
+   **Example from Neon Dashboard**:
+   ```
+   postgresql://neondb_owner:npg_EcP7OlMhL5NK@ep-winter-recipe-ai32e2lm-pooler.c-4.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+   ```
+   
+   **⚠️ COMMON ERROR** - If you copy from a web page, you might get HTML entities:
+   ```
+   ❌ WRONG: ...?sslmode=require&amp;channel_binding=require
+   ✅ RIGHT: ...?sslmode=require&channel_binding=require
+   ```
+   
+   **Note**: The app now automatically fixes `&amp;` to `&`, but it's best to paste the correct format.
+
 3. **Important**: Without DATABASE_URL, the app defaults to SQLite which gets wiped on each deploy
 
 ### Step 2: Redeploy
@@ -34,6 +51,39 @@ After deployment completes:
 3. Check Render logs if issues persist
 
 ## Troubleshooting
+
+### Common DATABASE_URL Issues
+
+#### Issue 1: HTML Entities in URL
+**Problem**: Copied from web interface, contains `&amp;` instead of `&`
+
+**Example (WRONG)**:
+```
+postgresql://user:pass@host/db?sslmode=require&amp;channel_binding=require
+```
+
+**Solution**: The app automatically fixes this, but if you want to fix manually:
+```
+postgresql://user:pass@host/db?sslmode=require&channel_binding=require
+```
+
+#### Issue 2: Includes `psql` command
+**Problem**: Copied entire command line from Neon dashboard
+
+**Example (WRONG)**:
+```
+psql 'postgresql://user:pass@host/db?sslmode=require'
+```
+
+**Solution**: The app automatically strips this, but you can remove `psql` and quotes manually:
+```
+postgresql://user:pass@host/db?sslmode=require
+```
+
+#### Issue 3: Extra quotes or whitespace
+**Problem**: URL has quotes or spaces at start/end
+
+**Solution**: The app automatically handles this, but ensure no extra characters.
 
 ### If migrations still fail:
 1. Check Render build logs for migration errors
