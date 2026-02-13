@@ -166,11 +166,6 @@ jupyterlab==4.4.6
 jupyterlab_pygments==0.3.0
 jupyterlab_server==2.27.3
 jupyterlab_widgets==3.0.15
-Kivy==2.3.1
-Kivy-Garden==0.1.5
-kivy_deps.angle==0.4.0
-kivy_deps.glew==0.3.1
-kivy_deps.sdl2==0.8.0
 kiwisolver==1.4.8
 kombu==5.5.4
 lazy_loader==0.4
@@ -262,7 +257,6 @@ python-magic==0.4.27
 python-multipart==0.0.20
 pythonnet==3.0.5
 pytz==2025.1
-pywin32==311
 pywinpty==3.0.0
 PyYAML==6.0.2
 pyzmq==27.0.2
