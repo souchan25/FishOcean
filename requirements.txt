@@ -4,3 +4,7 @@ psycopg2-binary
 dj-database-url
 whitenoise
 python-dotenv
+django-tailwind
+django-widget-tweaks
+Pillow
+stripe
