@@ -1,0 +1,210 @@
+{% extends 'custom_admin/base.html' %}
+{% load humanize %}
+
+{% block title %}Order #{{ order.id }}{% endblock %}
+{% block page_title %}Order Details{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Back Button -->
+    <a href="{% url 'custom_admin:order_list' %}" class="inline-flex items-center gap-2 text-dark-400 hover:text-white transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+        </svg>
+        Back to Orders
+    </a>
+    
+    <!-- Order Header -->
+    <div class="bg-dark-800/50 border border-dark-700 rounded-2xl p-6">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+                <div class="flex items-center gap-3">
+                    <h1 class="text-2xl font-bold text-white font-mono">Order #{{ order.id }}</h1>
+                    <span class="px-3 py-1 rounded-full text-sm font-medium
+                        {% if order.status == 'completed' %}bg-green-500/20 text-green-400
+                        {% elif order.status == 'pending' %}bg-amber-500/20 text-amber-400
+                        {% elif order.status == 'cancelled' %}bg-red-500/20 text-red-400
+                        {% elif order.status == 'preparing' %}bg-purple-500/20 text-purple-400
+                        {% elif order.status == 'out_for_delivery' %}bg-blue-500/20 text-blue-400
+                        {% elif order.status == 'paid' %}bg-emerald-500/20 text-emerald-400
+                        {% else %}bg-dark-600 text-dark-300{% endif %}">
+                        {{ order.get_status_display }}
+                    </span>
+                </div>
+                <p class="text-dark-400 mt-1">Placed on {{ order.created_at|date:"F d, Y" }} at {{ order.created_at|time:"H:i" }}</p>
+            </div>
+            
+            <div class="text-right">
+                <p class="text-dark-400 text-sm">Total Amount</p>
+                <p class="text-3xl font-bold text-white">₱{{ order.total_amount|floatformat:2|intcomma }}</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Left Column: Order Details -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Order Items -->
+            <div class="bg-dark-800/50 border border-dark-700 rounded-2xl overflow-hidden">
+                <div class="p-5 border-b border-dark-700">
+                    <h3 class="font-bold text-white">Order Items</h3>
+                </div>
+                <div class="divide-y divide-dark-700">
+                    {% for item in items %}
+                    <div class="p-5 flex items-center gap-4">
+                        {% if item.product and item.product.image %}
+                        <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" class="w-16 h-16 rounded-lg object-cover">
+                        {% else %}
+                        <div class="w-16 h-16 rounded-lg bg-dark-700 flex items-center justify-center text-2xl">🐟</div>
+                        {% endif %}
+                        <div class="flex-1">
+                            <p class="font-medium text-white">{{ item.product.name|default:"Deleted Product" }}</p>
+                            <p class="text-dark-400 text-sm">{{ item.quantity_kg }} kg × ₱{{ item.price_at_purchase|floatformat:2 }}/kg</p>
+                        </div>
+                        <p class="text-white font-bold">₱{{ item.get_cost|floatformat:2 }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="p-5 bg-dark-900/50 flex justify-between">
+                    <span class="text-dark-400">Total</span>
+                    <span class="text-white font-bold text-lg">₱{{ order.total_amount|floatformat:2|intcomma }}</span>
+                </div>
+            </div>
+            
+            <!-- Update Status -->
+            <div class="bg-dark-800/50 border border-dark-700 rounded-2xl p-6">
+                <h3 class="font-bold text-white mb-4">Update Status</h3>
+                <form method="POST" class="flex flex-wrap gap-3">
+                    {% csrf_token %}
+                    {% for value, label in status_choices %}
+                    <button type="submit" name="status" value="{{ value }}"
+                            class="px-4 py-2 rounded-lg text-sm font-medium transition
+                                {% if order.status == value %}
+                                    {% if value == 'completed' %}bg-green-500 text-white
+                                    {% elif value == 'pending' %}bg-amber-500 text-white
+                                    {% elif value == 'cancelled' %}bg-red-500 text-white
+                                    {% elif value == 'preparing' %}bg-purple-500 text-white
+                                    {% elif value == 'out_for_delivery' %}bg-blue-500 text-white
+                                    {% elif value == 'paid' %}bg-emerald-500 text-white
+                                    {% else %}bg-dark-500 text-white{% endif %}
+                                {% else %}
+                                    {% if value == 'completed' %}bg-green-500/20 text-green-400 hover:bg-green-500/30
+                                    {% elif value == 'pending' %}bg-amber-500/20 text-amber-400 hover:bg-amber-500/30
+                                    {% elif value == 'cancelled' %}bg-red-500/20 text-red-400 hover:bg-red-500/30
+                                    {% elif value == 'preparing' %}bg-purple-500/20 text-purple-400 hover:bg-purple-500/30
+                                    {% elif value == 'out_for_delivery' %}bg-blue-500/20 text-blue-400 hover:bg-blue-500/30
+                                    {% elif value == 'paid' %}bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30
+                                    {% else %}bg-dark-600 text-dark-300 hover:bg-dark-500{% endif %}
+                                {% endif %}">
+                        {{ label }}
+                    </button>
+                    {% endfor %}
+                </form>
+            </div>
+            
+            {% if order.proof_of_payment %}
+            <!-- Payment Proof -->
+            <div class="bg-dark-800/50 border border-dark-700 rounded-2xl p-6">
+                <h3 class="font-bold text-white mb-4">Payment Proof</h3>
+                <a href="{{ order.proof_of_payment.url }}" target="_blank" class="block">
+                    <img src="{{ order.proof_of_payment.url }}" alt="Payment Proof" class="rounded-lg max-h-96 object-contain border border-dark-600">
+                </a>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Right Column: Customer & Seller Info -->
+        <div class="space-y-6">
+            <!-- Customer Info -->
+            <div class="bg-dark-800/50 border border-dark-700 rounded-2xl p-6">
+                <h3 class="font-bold text-white mb-4">Customer</h3>
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-12 h-12 rounded-full bg-gradient-to-br from-admin-400 to-admin-600 flex items-center justify-center text-white font-bold">
+                        {{ order.buyer.username|slice:":1"|upper }}
+                    </div>
+                    <div>
+                        <a href="{% url 'custom_admin:user_detail' order.buyer.id %}" class="font-medium text-white hover:text-admin-400">{{ order.buyer.username }}</a>
+                        <p class="text-dark-400 text-sm">{{ order.buyer.email }}</p>
+                    </div>
+                </div>
+                <dl class="space-y-3 text-sm">
+                    <div>
+                        <dt class="text-dark-500">Contact</dt>
+                        <dd class="text-white">{{ order.contact_number }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-dark-500">Delivery Address</dt>
+                        <dd class="text-white">{{ order.delivery_address }}</dd>
+                    </div>
+                </dl>
+            </div>
+            
+            <!-- Seller Info -->
+            <div class="bg-dark-800/50 border border-dark-700 rounded-2xl p-6">
+                <h3 class="font-bold text-white mb-4">Seller</h3>
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white font-bold">
+                        {{ order.seller.username|slice:":1"|upper }}
+                    </div>
+                    <div>
+                        <a href="{% url 'custom_admin:user_detail' order.seller.id %}" class="font-medium text-white hover:text-admin-400">{{ order.seller.username }}</a>
+                        {% if order.seller.seller_profile %}
+                        <p class="text-dark-400 text-sm">{{ order.seller.seller_profile.shop_name }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% if order.seller.seller_profile %}
+                <dl class="space-y-3 text-sm">
+                    <div>
+                        <dt class="text-dark-500">Location</dt>
+                        <dd class="text-white">{{ order.seller.seller_profile.municipality }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-dark-500">Address</dt>
+                        <dd class="text-white">{{ order.seller.seller_profile.address }}</dd>
+                    </div>
+                </dl>
+                {% endif %}
+            </div>
+            
+            <!-- Payment Info -->
+            <div class="bg-dark-800/50 border border-dark-700 rounded-2xl p-6">
+                <h3 class="font-bold text-white mb-4">Payment</h3>
+                <dl class="space-y-3 text-sm">
+                    <div>
+                        <dt class="text-dark-500">Method</dt>
+                        <dd class="text-white">{{ order.get_payment_method_display }}</dd>
+                    </div>
+                    {% if order.paymongo_checkout_id %}
+                    <div>
+                        <dt class="text-dark-500">PayMongo Checkout ID</dt>
+                        <dd class="text-white font-mono text-xs">{{ order.paymongo_checkout_id }}</dd>
+                    </div>
+                    {% endif %}
+                    {% if order.paymongo_payment_intent_id %}
+                    <div>
+                        <dt class="text-dark-500">PayMongo Payment Intent</dt>
+                        <dd class="text-white font-mono text-xs">{{ order.paymongo_payment_intent_id }}</dd>
+                    </div>
+                    {% endif %}
+                </dl>
+            </div>
+            
+            <!-- Timeline -->
+            <div class="bg-dark-800/50 border border-dark-700 rounded-2xl p-6">
+                <h3 class="font-bold text-white mb-4">Timeline</h3>
+                <dl class="space-y-3 text-sm">
+                    <div class="flex justify-between">
+                        <dt class="text-dark-500">Created</dt>
+                        <dd class="text-white">{{ order.created_at|date:"M d, Y H:i" }}</dd>
+                    </div>
+                    <div class="flex justify-between">
+                        <dt class="text-dark-500">Last Updated</dt>
+                        <dd class="text-white">{{ order.updated_at|date:"M d, Y H:i" }}</dd>
+                    </div>
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

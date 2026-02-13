@@ -1,0 +1,439 @@
+{% extends 'store/base.html' %}
+{% load humanize %}
+
+{% block title %}Seller Dashboard | FishCurrent{% endblock %}
+
+{% block content %}
+<div class="space-y-6 animate-fade-in" x-data="{ tab: 'orders', showAddProduct: false }">
+    
+    <!-- Dashboard Header -->
+    <div class="relative overflow-hidden bg-gradient-to-br from-slate-900 via-ocean-900 to-slate-800 rounded-3xl p-6 lg:p-8 text-white shadow-2xl">
+        <!-- Decorative -->
+        <div class="absolute inset-0 overflow-hidden">
+            <div class="absolute top-0 right-0 w-80 h-80 bg-ocean-500/20 rounded-full blur-3xl"></div>
+            <div class="absolute -bottom-20 -left-20 w-60 h-60 bg-seafoam-500/10 rounded-full blur-3xl"></div>
+        </div>
+        
+        <div class="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div class="flex items-center gap-4">
+                <div class="w-16 h-16 bg-gradient-to-br from-ocean-400 to-seafoam-400 rounded-2xl flex items-center justify-center text-3xl font-bold shadow-xl">
+                    {{ request.user.username|make_list|first|upper }}
+                </div>
+                <div>
+                    <div class="flex items-center gap-3 mb-1">
+                        <h1 class="font-display text-2xl lg:text-3xl font-bold">{{ seller.shop_name }}</h1>
+                        {% if seller.is_verified %}
+                        <span class="inline-flex items-center gap-1.5 bg-seafoam-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                            Verified Seller
+                        </span>
+                        {% else %}
+                        <span class="inline-flex items-center gap-1.5 bg-amber-500 text-amber-900 text-xs font-bold px-3 py-1 rounded-full">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                            Pending Verification
+                        </span>
+                        {% endif %}
+                    </div>
+                    <p class="text-ocean-200 flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/></svg>
+                        {{ seller.municipality }}
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Tab Switcher -->
+            <div class="flex bg-white/10 backdrop-blur-sm rounded-2xl p-1.5 border border-white/10">
+                <button @click="tab = 'orders'" :class="tab === 'orders' ? 'bg-white text-slate-800 shadow-lg' : 'text-white/80 hover:text-white'" class="px-5 py-2.5 rounded-xl font-bold transition-all flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                    Orders
+                    {% if pending_orders > 0 %}
+                    <span class="w-5 h-5 bg-coral-500 text-white text-xs font-bold rounded-full flex items-center justify-center">{{ pending_orders }}</span>
+                    {% endif %}
+                </button>
+                <button @click="tab = 'products'" :class="tab === 'products' ? 'bg-white text-slate-800 shadow-lg' : 'text-white/80 hover:text-white'" class="px-5 py-2.5 rounded-xl font-bold transition-all flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                    Products
+                </button>
+                <button @click="tab = 'analytics'" :class="tab === 'analytics' ? 'bg-white text-slate-800 shadow-lg' : 'text-white/80 hover:text-white'" class="px-5 py-2.5 rounded-xl font-bold transition-all flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                    Analytics
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 hover:shadow-lg hover:border-coral-200 transition-all card-hover">
+            <div class="flex items-center justify-between mb-3">
+                <span class="w-10 h-10 bg-coral-100 rounded-xl flex items-center justify-center text-xl">📊</span>
+                <span class="text-xs font-bold text-coral-500 bg-coral-50 px-2 py-1 rounded-full">Today</span>
+            </div>
+            <p class="text-2xl font-bold text-slate-800">₱{{ today_revenue|intcomma }}</p>
+            <p class="text-sm text-slate-500">{{ today_orders }} orders</p>
+        </div>
+        
+        <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 hover:shadow-lg hover:border-ocean-200 transition-all card-hover">
+            <div class="flex items-center justify-between mb-3">
+                <span class="w-10 h-10 bg-ocean-100 rounded-xl flex items-center justify-center text-xl">📈</span>
+                <span class="text-xs font-bold text-ocean-500 bg-ocean-50 px-2 py-1 rounded-full">This Week</span>
+            </div>
+            <p class="text-2xl font-bold text-slate-800">₱{{ weekly_revenue|intcomma }}</p>
+            <p class="text-sm text-slate-500">{{ weekly_orders }} orders</p>
+        </div>
+        
+        <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 hover:shadow-lg hover:border-seafoam-200 transition-all card-hover">
+            <div class="flex items-center justify-between mb-3">
+                <span class="w-10 h-10 bg-seafoam-100 rounded-xl flex items-center justify-center text-xl">💰</span>
+                <span class="text-xs font-bold text-seafoam-600 bg-seafoam-50 px-2 py-1 rounded-full">This Month</span>
+            </div>
+            <p class="text-2xl font-bold text-slate-800">₱{{ monthly_revenue|intcomma }}</p>
+            <p class="text-sm text-slate-500">{{ monthly_orders }} orders</p>
+        </div>
+        
+        <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 hover:shadow-lg hover:border-purple-200 transition-all card-hover">
+            <div class="flex items-center justify-between mb-3">
+                <span class="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center text-xl">🏆</span>
+                <span class="text-xs font-bold text-purple-500 bg-purple-50 px-2 py-1 rounded-full">All Time</span>
+            </div>
+            <p class="text-2xl font-bold text-slate-800">₱{{ total_revenue|intcomma }}</p>
+            <p class="text-sm text-slate-500">{{ total_orders }} orders</p>
+        </div>
+    </div>
+
+    <!-- Low Stock Alert -->
+    {% if low_stock_products %}
+    <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center gap-4">
+        <div class="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center text-2xl flex-shrink-0">⚠️</div>
+        <div class="flex-grow">
+            <h3 class="font-bold text-amber-800">Low Stock Alert</h3>
+            <p class="text-sm text-amber-700">
+                {{ low_stock_products.count }} product{{ low_stock_products.count|pluralize }} running low: 
+                {% for p in low_stock_products %}{{ p.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+            </p>
+        </div>
+        <button @click="tab = 'products'" class="px-4 py-2 bg-amber-200 text-amber-800 rounded-xl font-medium hover:bg-amber-300 transition text-sm">
+            Restock
+        </button>
+    </div>
+    {% endif %}
+
+    <!-- Orders Tab -->
+    <div x-show="tab === 'orders'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" class="space-y-4">
+        <div class="flex items-center justify-between">
+            <h2 class="font-display text-2xl font-bold text-slate-800 flex items-center gap-2">
+                <span class="w-10 h-10 bg-ocean-100 rounded-xl flex items-center justify-center">📦</span>
+                Incoming Orders
+            </h2>
+            <div class="flex items-center gap-2 text-sm">
+                <span class="px-3 py-1.5 bg-amber-100 text-amber-700 rounded-lg font-medium">{{ pending_orders }} pending</span>
+            </div>
+        </div>
+        
+        {% if orders %}
+            <div class="space-y-4">
+            {% for order in orders %}
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 hover:border-ocean-200 hover:shadow-lg transition-all overflow-hidden">
+                <div class="p-4 bg-slate-50 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2">
+                    <div class="flex items-center gap-3">
+                        <span class="font-display font-bold text-slate-800">#{{ order.id }}</span>
+                        <span class="text-slate-400">•</span>
+                        <span class="text-slate-500 text-sm">{{ order.created_at|naturaltime }}</span>
+                    </div>
+                    <span class="px-3 py-1 rounded-full text-xs font-bold uppercase
+                        {% if order.status == 'pending' %}bg-amber-100 text-amber-700
+                        {% elif order.status == 'paid' %}bg-ocean-100 text-ocean-700
+                        {% elif order.status == 'preparing' %}bg-purple-100 text-purple-700
+                        {% elif order.status == 'out_for_delivery' %}bg-seafoam-100 text-seafoam-700
+                        {% elif order.status == 'completed' %}bg-green-100 text-green-700
+                        {% else %}bg-slate-100 text-slate-700{% endif %}">
+                        {{ order.get_status_display }}
+                    </span>
+                </div>
+                
+                <div class="p-4">
+                    <!-- Customer Info -->
+                    <div class="flex items-start gap-4 mb-4 pb-4 border-b border-slate-100">
+                        <div class="w-10 h-10 bg-gradient-to-br from-ocean-400 to-seafoam-400 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0">
+                            {{ order.buyer.username|make_list|first|upper }}
+                        </div>
+                        <div class="flex-grow min-w-0">
+                            <h3 class="font-bold text-slate-800">{{ order.buyer.username }}</h3>
+                            <p class="text-sm text-slate-500 truncate">{{ order.contact_number }} • {{ order.delivery_address }}</p>
+                        </div>
+                        <div class="text-right flex-shrink-0">
+                            <p class="text-xl font-bold text-ocean-600">₱{{ order.total_amount|intcomma }}</p>
+                            <p class="text-xs text-slate-400">{{ order.get_payment_method_display }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Items -->
+                    <div class="space-y-2 mb-4">
+                        {% for item in order.items.all %}
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="text-slate-600">{{ item.quantity_kg }}kg {{ item.product.name }}</span>
+                            <span class="font-medium text-slate-800">₱{{ item.get_cost|intcomma }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="flex flex-wrap items-center gap-3 pt-4 border-t border-slate-100">
+                        {% if order.proof_of_payment %}
+                        <a href="{{ order.proof_of_payment.url }}" target="_blank" class="text-ocean-600 font-medium text-sm flex items-center gap-1 hover:text-ocean-700">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                            View Payment
+                        </a>
+                        {% elif order.payment_method == 'cod' %}
+                        <span class="text-slate-500 text-sm font-medium flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                            Cash on Delivery
+                        </span>
+                        {% else %}
+                        <span class="text-coral-500 text-sm font-medium">No Payment Proof</span>
+                        {% endif %}
+
+                        <div class="flex-grow"></div>
+
+                        <!-- Status Update -->
+                        <form action="{% url 'orders:update_order_status' order.id %}" method="POST" class="flex gap-2">
+                            {% csrf_token %}
+                            {% if order.status == 'pending' %}
+                            <button name="status" value="preparing" class="px-4 py-2 bg-gradient-to-r from-ocean-500 to-seafoam-500 text-white rounded-xl font-medium text-sm shadow-lg hover:shadow-ocean-500/30 transition flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                Accept & Prepare
+                            </button>
+                            {% elif order.status == 'preparing' %}
+                            <button name="status" value="out_for_delivery" class="px-4 py-2 bg-gradient-to-r from-coral-500 to-orange-500 text-white rounded-xl font-medium text-sm shadow-lg transition flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/></svg>
+                                Send for Delivery
+                            </button>
+                            {% elif order.status == 'out_for_delivery' %}
+                            <button name="status" value="completed" class="px-4 py-2 bg-green-500 text-white rounded-xl font-medium text-sm shadow-lg transition flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                Mark Completed
+                            </button>
+                            {% endif %}
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            </div>
+        {% else %}
+        <div class="text-center py-16 bg-white rounded-2xl border-2 border-dashed border-slate-200">
+            <div class="w-20 h-20 mx-auto mb-4 bg-slate-100 rounded-full flex items-center justify-center">
+                <span class="text-4xl">📭</span>
+            </div>
+            <h3 class="font-display text-xl font-bold text-slate-800 mb-2">No orders yet</h3>
+            <p class="text-slate-500">When customers place orders, they'll appear here</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Products Tab -->
+    <div x-show="tab === 'products'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" class="space-y-4" style="display: none;">
+        <div class="flex items-center justify-between">
+            <h2 class="font-display text-2xl font-bold text-slate-800 flex items-center gap-2">
+                <span class="w-10 h-10 bg-seafoam-100 rounded-xl flex items-center justify-center">🐟</span>
+                My Products
+            </h2>
+            <button @click="showAddProduct = !showAddProduct" class="px-5 py-2.5 bg-gradient-to-r from-ocean-500 to-seafoam-500 text-white rounded-xl font-bold shadow-lg shadow-ocean-500/30 hover:shadow-ocean-500/50 transition flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                Add Product
+            </button>
+        </div>
+
+        <!-- Add Product Form -->
+        <div x-show="showAddProduct" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 -translate-y-4" class="bg-white p-6 rounded-2xl shadow-lg border border-slate-100" style="display: none;">
+            <h3 class="font-display font-bold text-lg mb-4 flex items-center gap-2">
+                <span class="w-8 h-8 bg-ocean-100 rounded-lg flex items-center justify-center">➕</span>
+                Add New Fish Product
+            </h3>
+            <form action="{% url 'users:add_product' %}" method="POST" enctype="multipart/form-data" class="space-y-4">
+                {% csrf_token %}
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-1">Product Name</label>
+                        <input type="text" name="name" placeholder="e.g. Fresh Bangus" class="w-full rounded-xl border-slate-200 focus:border-ocean-500 focus:ring-ocean-500" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-1">Category</label>
+                        <select name="category" class="w-full rounded-xl border-slate-200 focus:border-ocean-500 focus:ring-ocean-500" required>
+                            <option value="">Select category</option>
+                            {% for cat in categories %}
+                            <option value="{{ cat.id }}">{{ cat.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-1">Price per Kg (₱)</label>
+                        <input type="number" name="price" placeholder="0.00" step="0.01" class="w-full rounded-xl border-slate-200 focus:border-ocean-500 focus:ring-ocean-500" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-1">Initial Stock (kg)</label>
+                        <input type="number" name="stocks" placeholder="0" step="0.5" class="w-full rounded-xl border-slate-200 focus:border-ocean-500 focus:ring-ocean-500" required>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-1">Description</label>
+                    <textarea name="description" rows="2" placeholder="Describe your product..." class="w-full rounded-xl border-slate-200 focus:border-ocean-500 focus:ring-ocean-500"></textarea>
+                </div>
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-1">Main Photo</label>
+                        <input type="file" name="image" accept="image/*" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:font-medium file:bg-ocean-50 file:text-ocean-600 hover:file:bg-ocean-100">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-1">Additional Photos</label>
+                        <input type="file" name="images" multiple accept="image/*" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:font-medium file:bg-ocean-50 file:text-ocean-600 hover:file:bg-ocean-100">
+                    </div>
+                </div>
+                <div class="flex gap-3 pt-2">
+                    <button type="submit" class="px-6 py-3 bg-ocean-500 text-white rounded-xl font-bold hover:bg-ocean-600 transition shadow-lg">
+                        List Product
+                    </button>
+                    <button type="button" @click="showAddProduct = false" class="px-6 py-3 bg-slate-100 text-slate-600 rounded-xl font-medium hover:bg-slate-200 transition">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Product List -->
+        <div class="grid gap-3">
+            {% for product in products %}
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 hover:border-ocean-200 hover:shadow-lg transition-all flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                <div class="w-16 h-16 bg-slate-100 rounded-xl overflow-hidden flex-shrink-0">
+                    {% if product.image %}
+                    <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-full object-cover">
+                    {% else %}
+                    <div class="w-full h-full flex items-center justify-center text-2xl">🐟</div>
+                    {% endif %}
+                </div>
+                
+                <div class="flex-grow min-w-0">
+                    <div class="flex items-center gap-2 mb-1">
+                        <h3 class="font-bold text-slate-800 {% if not product.is_live %}text-slate-400{% endif %} truncate">{{ product.name }}</h3>
+                        <span class="text-xs font-bold uppercase px-2 py-0.5 rounded-full {% if product.is_live %}bg-seafoam-100 text-seafoam-600{% else %}bg-slate-100 text-slate-500{% endif %}">
+                            {{ product.is_live|yesno:'Active,Inactive' }}
+                        </span>
+                    </div>
+                    <p class="text-sm text-slate-500">{{ product.stocks_kg }}kg stock • ₱{{ product.price_per_kg|intcomma }}/kg</p>
+                </div>
+                
+                <div class="flex items-center gap-2 flex-shrink-0">
+                    <a href="{% url 'users:toggle_product_status' product.id %}" class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-amber-100 text-slate-500 hover:text-amber-600 transition" title="Toggle Status">
+                        {% if product.is_live %}
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/></svg>
+                        {% else %}
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                        {% endif %}
+                    </a>
+                    <a href="{% url 'store:edit_product' product.id %}" class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-ocean-100 text-slate-500 hover:text-ocean-600 transition" title="Edit">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    </a>
+                    <a href="{% url 'store:delete_product' product.id %}" onclick="return confirm('Delete this product?')" class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-coral-100 text-slate-500 hover:text-coral-600 transition" title="Delete">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    </a>
+                </div>
+            </div>
+            {% empty %}
+            <div class="text-center py-16 bg-white rounded-2xl border-2 border-dashed border-slate-200">
+                <div class="w-20 h-20 mx-auto mb-4 bg-slate-100 rounded-full flex items-center justify-center">
+                    <span class="text-4xl">🐟</span>
+                </div>
+                <h3 class="font-display text-xl font-bold text-slate-800 mb-2">No products yet</h3>
+                <p class="text-slate-500 mb-4">Start selling by adding your first product</p>
+                <button @click="showAddProduct = true" class="px-6 py-3 bg-ocean-500 text-white rounded-xl font-bold hover:bg-ocean-600 transition">
+                    Add Your First Product
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Analytics Tab -->
+    <div x-show="tab === 'analytics'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" class="space-y-6" style="display: none;">
+        <h2 class="font-display text-2xl font-bold text-slate-800 flex items-center gap-2">
+            <span class="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">📊</span>
+            Business Analytics
+        </h2>
+        
+        <div class="grid lg:grid-cols-2 gap-6">
+            <!-- Best Sellers -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                <h3 class="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                    <span class="text-xl">🏆</span> Top Selling Products
+                </h3>
+                <div class="space-y-3">
+                    {% for item in best_sellers %}
+                    <div class="flex items-center gap-3">
+                        <span class="w-8 h-8 bg-amber-100 text-amber-600 rounded-lg flex items-center justify-center font-bold text-sm">{{ forloop.counter }}</span>
+                        <div class="flex-grow">
+                            <p class="font-medium text-slate-800">{{ item.product__name }}</p>
+                            <p class="text-xs text-slate-500">{{ item.total_qty }}kg sold</p>
+                        </div>
+                        <span class="font-bold text-ocean-600">₱{{ item.total_revenue|intcomma }}</span>
+                    </div>
+                    {% empty %}
+                    <p class="text-slate-500 text-center py-4">No sales data yet</p>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- Customer Insights -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                <h3 class="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                    <span class="text-xl">👥</span> Customer Insights
+                </h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-ocean-50 rounded-xl p-4 text-center">
+                        <p class="text-3xl font-bold text-ocean-600">{{ unique_customers }}</p>
+                        <p class="text-sm text-ocean-700">Unique Customers</p>
+                    </div>
+                    <div class="bg-seafoam-50 rounded-xl p-4 text-center">
+                        <p class="text-3xl font-bold text-seafoam-600">₱{{ avg_order_value|floatformat:0|intcomma }}</p>
+                        <p class="text-sm text-seafoam-700">Avg Order Value</p>
+                    </div>
+                    <div class="bg-purple-50 rounded-xl p-4 text-center">
+                        <p class="text-3xl font-bold text-purple-600">{{ completed_orders }}</p>
+                        <p class="text-sm text-purple-700">Completed Orders</p>
+                    </div>
+                    <div class="bg-coral-50 rounded-xl p-4 text-center">
+                        <p class="text-3xl font-bold text-coral-600">{{ products.count }}</p>
+                        <p class="text-sm text-coral-700">Active Products</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recent Reviews -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 lg:col-span-2">
+                <h3 class="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                    <span class="text-xl">⭐</span> Recent Reviews
+                </h3>
+                <div class="grid md:grid-cols-2 gap-4">
+                    {% for review in recent_reviews %}
+                    <div class="bg-slate-50 rounded-xl p-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-medium text-slate-800">{{ review.user.username }}</span>
+                            <div class="flex text-amber-400">
+                                {% for i in "12345" %}
+                                    {% if forloop.counter <= review.rating %}★{% else %}<span class="text-slate-200">★</span>{% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <p class="text-sm text-slate-600 mb-2">{{ review.content|truncatewords:15 }}</p>
+                        <p class="text-xs text-slate-400">{{ review.product.name }} • {{ review.created_at|naturaltime }}</p>
+                    </div>
+                    {% empty %}
+                    <p class="text-slate-500 text-center py-4 col-span-2">No reviews yet</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

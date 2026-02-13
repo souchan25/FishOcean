@@ -1,0 +1,147 @@
+{% extends 'custom_admin/base.html' %}
+
+{% block title %}Users{% endblock %}
+{% block page_title %}User Management{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-white">Users</h1>
+            <p class="text-dark-400 mt-1">Manage all registered users</p>
+        </div>
+    </div>
+    
+    <!-- Filters -->
+    <div class="bg-dark-800/50 border border-dark-700 rounded-xl p-4">
+        <form method="GET" class="flex flex-wrap items-center gap-4">
+            <!-- Search -->
+            <div class="flex-1 min-w-[200px]">
+                <div class="relative">
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-dark-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <input type="text" name="search" value="{{ search }}" placeholder="Search users..." 
+                           class="w-full pl-10 pr-4 py-2.5 bg-dark-900 border border-dark-600 rounded-lg text-white placeholder-dark-400 focus:ring-admin-500 focus:border-admin-500">
+                </div>
+            </div>
+            
+            <!-- Type Filter -->
+            <select name="type" class="bg-dark-900 border border-dark-600 rounded-lg text-white px-4 py-2.5 focus:ring-admin-500 focus:border-admin-500">
+                <option value="">All Users</option>
+                <option value="buyers" {% if user_type == 'buyers' %}selected{% endif %}>Buyers</option>
+                <option value="sellers" {% if user_type == 'sellers' %}selected{% endif %}>Sellers</option>
+                <option value="staff" {% if user_type == 'staff' %}selected{% endif %}>Staff/Admin</option>
+            </select>
+            
+            <button type="submit" class="px-6 py-2.5 bg-admin-500 hover:bg-admin-600 text-white rounded-lg font-medium transition">
+                Filter
+            </button>
+            
+            {% if search or user_type %}
+            <a href="{% url 'custom_admin:user_list' %}" class="px-4 py-2.5 text-dark-400 hover:text-white transition">Clear</a>
+            {% endif %}
+        </form>
+    </div>
+    
+    <!-- Users Table -->
+    <div class="bg-dark-800/50 border border-dark-700 rounded-2xl overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-dark-900/50">
+                    <tr class="text-left text-xs text-dark-400 uppercase tracking-wider">
+                        <th class="px-5 py-4">User</th>
+                        <th class="px-5 py-4">Email</th>
+                        <th class="px-5 py-4">Phone</th>
+                        <th class="px-5 py-4">Type</th>
+                        <th class="px-5 py-4">Status</th>
+                        <th class="px-5 py-4">Joined</th>
+                        <th class="px-5 py-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-dark-700">
+                    {% for user in users %}
+                    <tr class="hover:bg-dark-700/30 transition">
+                        <td class="px-5 py-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-admin-400 to-admin-600 flex items-center justify-center text-white font-bold">
+                                    {{ user.username|slice:":1"|upper }}
+                                </div>
+                                <div>
+                                    <a href="{% url 'custom_admin:user_detail' user.id %}" class="font-medium text-white hover:text-admin-400">{{ user.username }}</a>
+                                    {% if user.is_superuser %}
+                                    <span class="ml-2 text-xs bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded">Superuser</span>
+                                    {% elif user.is_staff %}
+                                    <span class="ml-2 text-xs bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded">Staff</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-5 py-4 text-dark-300">{{ user.email|default:"-" }}</td>
+                        <td class="px-5 py-4 text-dark-300">{{ user.phone_number|default:"-" }}</td>
+                        <td class="px-5 py-4">
+                            {% if user.is_seller %}
+                            <span class="px-2 py-1 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-400">Seller</span>
+                            {% elif user.is_buyer %}
+                            <span class="px-2 py-1 rounded-full text-xs font-medium bg-admin-500/20 text-admin-400">Buyer</span>
+                            {% else %}
+                            <span class="px-2 py-1 rounded-full text-xs font-medium bg-dark-600 text-dark-300">N/A</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-5 py-4">
+                            {% if user.is_active %}
+                            <span class="flex items-center gap-1.5 text-green-400 text-sm">
+                                <span class="w-2 h-2 rounded-full bg-green-400"></span> Active
+                            </span>
+                            {% else %}
+                            <span class="flex items-center gap-1.5 text-red-400 text-sm">
+                                <span class="w-2 h-2 rounded-full bg-red-400"></span> Inactive
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-5 py-4 text-dark-400 text-sm">{{ user.date_joined|date:"M d, Y" }}</td>
+                        <td class="px-5 py-4">
+                            <a href="{% url 'custom_admin:user_detail' user.id %}" class="text-admin-400 hover:text-admin-300 transition">
+                                View →
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="px-5 py-12 text-center text-dark-400">
+                            <svg class="w-12 h-12 mx-auto mb-4 text-dark-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                            </svg>
+                            No users found
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        {% if users.has_other_pages %}
+        <div class="px-5 py-4 border-t border-dark-700 flex items-center justify-between">
+            <p class="text-dark-400 text-sm">
+                Showing {{ users.start_index }} to {{ users.end_index }} of {{ users.paginator.count }} users
+            </p>
+            <div class="flex items-center gap-2">
+                {% if users.has_previous %}
+                <a href="?page={{ users.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if user_type %}&type={{ user_type }}{% endif %}" 
+                   class="px-3 py-1.5 bg-dark-700 hover:bg-dark-600 text-white rounded-lg transition">Previous</a>
+                {% endif %}
+                
+                <span class="px-3 py-1.5 text-dark-400">Page {{ users.number }} of {{ users.paginator.num_pages }}</span>
+                
+                {% if users.has_next %}
+                <a href="?page={{ users.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if user_type %}&type={{ user_type }}{% endif %}" 
+                   class="px-3 py-1.5 bg-dark-700 hover:bg-dark-600 text-white rounded-lg transition">Next</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

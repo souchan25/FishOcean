@@ -1,0 +1,183 @@
+{% extends 'custom_admin/base.html' %}
+{% load humanize %}
+
+{% block title %}Products{% endblock %}
+{% block page_title %}Product Management{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-white">Products</h1>
+            <p class="text-dark-400 mt-1">View and manage all marketplace products</p>
+        </div>
+    </div>
+    
+    <!-- Filters -->
+    <div class="bg-dark-800/50 border border-dark-700 rounded-xl p-4">
+        <form method="GET" class="flex flex-wrap items-center gap-4">
+            <div class="flex-1 min-w-[200px]">
+                <div class="relative">
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-dark-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <input type="text" name="search" value="{{ search }}" placeholder="Search products..." 
+                           class="w-full pl-10 pr-4 py-2.5 bg-dark-900 border border-dark-600 rounded-lg text-white placeholder-dark-400 focus:ring-admin-500 focus:border-admin-500">
+                </div>
+            </div>
+            
+            <select name="status" class="bg-dark-900 border border-dark-600 rounded-lg text-white px-4 py-2.5 focus:ring-admin-500 focus:border-admin-500">
+                <option value="">All Status</option>
+                <option value="live" {% if status == 'live' %}selected{% endif %}>Live</option>
+                <option value="hidden" {% if status == 'hidden' %}selected{% endif %}>Hidden</option>
+                <option value="low_stock" {% if status == 'low_stock' %}selected{% endif %}>Low Stock</option>
+                <option value="out_of_stock" {% if status == 'out_of_stock' %}selected{% endif %}>Out of Stock</option>
+            </select>
+            
+            <select name="category" class="bg-dark-900 border border-dark-600 rounded-lg text-white px-4 py-2.5 focus:ring-admin-500 focus:border-admin-500">
+                <option value="">All Categories</option>
+                {% for cat in categories %}
+                <option value="{{ cat.slug }}" {% if category == cat.slug %}selected{% endif %}>{{ cat.icon }} {{ cat.name }}</option>
+                {% endfor %}
+            </select>
+            
+            <button type="submit" class="px-6 py-2.5 bg-admin-500 hover:bg-admin-600 text-white rounded-lg font-medium transition">
+                Filter
+            </button>
+            
+            {% if search or status or category %}
+            <a href="{% url 'custom_admin:product_list' %}" class="px-4 py-2.5 text-dark-400 hover:text-white transition">Clear</a>
+            {% endif %}
+        </form>
+    </div>
+    
+    <!-- Products Table -->
+    <div class="bg-dark-800/50 border border-dark-700 rounded-2xl overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-dark-900/50">
+                    <tr class="text-left text-xs text-dark-400 uppercase tracking-wider">
+                        <th class="px-5 py-4">Product</th>
+                        <th class="px-5 py-4">Seller</th>
+                        <th class="px-5 py-4">Category</th>
+                        <th class="px-5 py-4">Price</th>
+                        <th class="px-5 py-4">Stock</th>
+                        <th class="px-5 py-4">Status</th>
+                        <th class="px-5 py-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-dark-700">
+                    {% for product in products %}
+                    <tr class="hover:bg-dark-700/30 transition">
+                        <td class="px-5 py-4">
+                            <div class="flex items-center gap-3">
+                                {% if product.image %}
+                                <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-12 h-12 rounded-lg object-cover">
+                                {% else %}
+                                <div class="w-12 h-12 rounded-lg bg-dark-700 flex items-center justify-center text-2xl">🐟</div>
+                                {% endif %}
+                                <div>
+                                    <p class="font-medium text-white">{{ product.name }}</p>
+                                    <p class="text-dark-400 text-xs">Added {{ product.created_at|timesince }} ago</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-5 py-4">
+                            <a href="{% url 'custom_admin:user_detail' product.seller.id %}" class="text-admin-400 hover:underline">{{ product.seller.username }}</a>
+                        </td>
+                        <td class="px-5 py-4 text-dark-300">
+                            {% if product.category %}
+                            {{ product.category.icon }} {{ product.category.name }}
+                            {% else %}
+                            <span class="text-dark-500">Uncategorized</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-5 py-4">
+                            <span class="text-white font-medium">₱{{ product.price_per_kg|floatformat:2 }}/kg</span>
+                            {% if product.original_price %}
+                            <span class="text-dark-500 text-xs line-through block">₱{{ product.original_price|floatformat:2 }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-5 py-4">
+                            {% if product.stocks_kg <= 0 %}
+                            <span class="text-red-400 font-medium">Out of stock</span>
+                            {% elif product.stocks_kg <= 5 %}
+                            <span class="text-amber-400 font-medium">{{ product.stocks_kg }} kg</span>
+                            {% else %}
+                            <span class="text-green-400">{{ product.stocks_kg }} kg</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-5 py-4">
+                            {% if product.is_live %}
+                            <span class="flex items-center gap-1.5 text-green-400 text-sm">
+                                <span class="w-2 h-2 rounded-full bg-green-400"></span> Live
+                            </span>
+                            {% else %}
+                            <span class="flex items-center gap-1.5 text-dark-400 text-sm">
+                                <span class="w-2 h-2 rounded-full bg-dark-500"></span> Hidden
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-5 py-4">
+                            <div class="flex items-center gap-2">
+                                <a href="/marketplace/{{ product.id }}/" target="_blank" class="p-2 text-dark-400 hover:text-white hover:bg-dark-700 rounded-lg transition" title="View Product">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                                    </svg>
+                                </a>
+                                <a href="{% url 'custom_admin:product_toggle' product.id %}" 
+                                   class="p-2 {% if product.is_live %}text-red-400 hover:bg-red-500/20{% else %}text-green-400 hover:bg-green-500/20{% endif %} rounded-lg transition"
+                                   title="{% if product.is_live %}Hide{% else %}Make Live{% endif %}">
+                                    {% if product.is_live %}
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
+                                    </svg>
+                                    {% else %}
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                    </svg>
+                                    {% endif %}
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="px-5 py-12 text-center text-dark-400">
+                            <svg class="w-12 h-12 mx-auto mb-4 text-dark-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                            </svg>
+                            No products found
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        {% if products.has_other_pages %}
+        <div class="px-5 py-4 border-t border-dark-700 flex items-center justify-between">
+            <p class="text-dark-400 text-sm">
+                Showing {{ products.start_index }} to {{ products.end_index }} of {{ products.paginator.count }} products
+            </p>
+            <div class="flex items-center gap-2">
+                {% if products.has_previous %}
+                <a href="?page={{ products.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if status %}&status={{ status }}{% endif %}{% if category %}&category={{ category }}{% endif %}" 
+                   class="px-3 py-1.5 bg-dark-700 hover:bg-dark-600 text-white rounded-lg transition">Previous</a>
+                {% endif %}
+                
+                <span class="px-3 py-1.5 text-dark-400">Page {{ products.number }} of {{ products.paginator.num_pages }}</span>
+                
+                {% if products.has_next %}
+                <a href="?page={{ products.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if status %}&status={{ status }}{% endif %}{% if category %}&category={{ category }}{% endif %}" 
+                   class="px-3 py-1.5 bg-dark-700 hover:bg-dark-600 text-white rounded-lg transition">Next</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,81 @@
+{% extends 'store/base.html' %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto py-8">
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
+        <h2 class="text-2xl font-bold mb-6 text-gray-800">Edit Profile</h2>
+        
+        <form method="POST" enctype="multipart/form-data" class="space-y-6">
+            {% csrf_token %}
+            
+            <h3 class="text-lg font-bold text-gray-700 border-b pb-2">Personal Information</h3>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                    <input type="text" name="first_name" value="{{ user.first_name }}"
+                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                    <input type="text" name="last_name" value="{{ user.last_name }}"
+                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                </div>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                <input type="text" name="phone_number" value="{{ user.phone_number|default:'' }}"
+                    class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+            </div>
+
+            {% if user.is_seller %}
+            <h3 class="text-lg font-bold text-gray-700 border-b pb-2 pt-4">Shop Details (Seller)</h3>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Shop Name</label>
+                <input type="text" name="shop_name" value="{{ user.seller_profile.shop_name }}"
+                    class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Municipality</label>
+                    <select name="municipality" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <option value="Kabankalan" {% if user.seller_profile.municipality == 'Kabankalan' %}selected{% endif %}>Kabankalan</option>
+                        <option value="Ilog" {% if user.seller_profile.municipality == 'Ilog' %}selected{% endif %}>Ilog</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div>
+                 <label class="block text-sm font-medium text-gray-700 mb-1">Shop Address</label>
+                 <textarea name="address" rows="2" class="w-full rounded-lg border-gray-300 shadow-sm">{{ user.seller_profile.address }}</textarea>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-xl border border-gray-200">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Update GCash QR</label>
+                    <input type="file" name="gcash_qr" class="text-sm">
+                    {% if user.seller_profile.gcash_qr_image %}
+                        <p class="text-xs text-green-600 mt-1">✓ Current: Set</p>
+                    {% endif %}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Update Maya QR</label>
+                    <input type="file" name="maya_qr" class="text-sm">
+                     {% if user.seller_profile.maya_qr_image %}
+                        <p class="text-xs text-green-600 mt-1">✓ Current: Set</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="flex justify-end pt-4">
+                <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-blue-700 transition">
+                    Update Profile
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

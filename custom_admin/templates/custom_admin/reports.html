@@ -1,0 +1,218 @@
+{% extends 'custom_admin/base.html' %}
+{% load humanize %}
+
+{% block title %}Reports{% endblock %}
+{% block page_title %}Reports & Analytics{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div>
+        <h1 class="text-2xl font-bold text-white">Reports & Analytics</h1>
+        <p class="text-dark-400 mt-1">Detailed insights into your marketplace performance</p>
+    </div>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Revenue Chart -->
+        <div class="bg-dark-800/50 border border-dark-700 rounded-2xl p-6">
+            <h3 class="font-bold text-white mb-4">Monthly Revenue Trend</h3>
+            <div class="h-64">
+                <canvas id="revenueChart"></canvas>
+            </div>
+        </div>
+        
+        <!-- Orders by Payment Method -->
+        <div class="bg-dark-800/50 border border-dark-700 rounded-2xl p-6">
+            <h3 class="font-bold text-white mb-4">Orders by Payment Method</h3>
+            <div class="h-64">
+                <canvas id="paymentChart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Top Selling Products -->
+        <div class="bg-dark-800/50 border border-dark-700 rounded-2xl overflow-hidden">
+            <div class="p-5 border-b border-dark-700">
+                <h3 class="font-bold text-white">Top Selling Products</h3>
+            </div>
+            <div class="divide-y divide-dark-700">
+                {% for product in top_products %}
+                <div class="p-4 flex items-center gap-4">
+                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-admin-400 to-admin-600 flex items-center justify-center text-white text-sm font-bold">
+                        {{ forloop.counter }}
+                    </div>
+                    {% if product.image %}
+                    <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-12 h-12 rounded-lg object-cover">
+                    {% else %}
+                    <div class="w-12 h-12 rounded-lg bg-dark-700 flex items-center justify-center text-xl">🐟</div>
+                    {% endif %}
+                    <div class="flex-1 min-w-0">
+                        <p class="font-medium text-white truncate">{{ product.name }}</p>
+                        <p class="text-dark-400 text-sm">{{ product.total_sold|floatformat:1|default:"0" }} kg sold</p>
+                    </div>
+                    <p class="text-green-400 font-bold">₱{{ product.revenue|floatformat:0|intcomma|default:"0" }}</p>
+                </div>
+                {% empty %}
+                <div class="p-8 text-center text-dark-400">No sales data yet</div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Top Sellers -->
+        <div class="bg-dark-800/50 border border-dark-700 rounded-2xl overflow-hidden">
+            <div class="p-5 border-b border-dark-700">
+                <h3 class="font-bold text-white">Top Sellers by Revenue</h3>
+            </div>
+            <div class="divide-y divide-dark-700">
+                {% for seller in top_sellers %}
+                <div class="p-4 flex items-center gap-4">
+                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white text-sm font-bold">
+                        {{ forloop.counter }}
+                    </div>
+                    <div class="w-12 h-12 rounded-full bg-dark-600 flex items-center justify-center text-white font-bold">
+                        {{ seller.shop_name|slice:":1"|upper }}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="font-medium text-white truncate">{{ seller.shop_name }}</p>
+                        <p class="text-dark-400 text-sm">{{ seller.total_orders }} orders • {{ seller.municipality }}</p>
+                    </div>
+                    <p class="text-green-400 font-bold">₱{{ seller.total_revenue|floatformat:0|intcomma|default:"0" }}</p>
+                </div>
+                {% empty %}
+                <div class="p-8 text-center text-dark-400">No sales data yet</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Orders by Location -->
+    <div class="bg-dark-800/50 border border-dark-700 rounded-2xl p-6">
+        <h3 class="font-bold text-white mb-4">Performance by Location</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% for location in orders_by_location %}
+            <div class="bg-dark-900/50 rounded-xl p-5">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-3">
+                        <span class="text-2xl">📍</span>
+                        <div>
+                            <p class="font-bold text-white">{{ location.municipality }}</p>
+                            <p class="text-dark-400 text-sm">{{ location.orders|default:0 }} orders</p>
+                        </div>
+                    </div>
+                    <p class="text-green-400 font-bold text-lg">₱{{ location.revenue|floatformat:0|intcomma|default:"0" }}</p>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-span-full p-8 text-center text-dark-400">No location data yet</div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- User Growth Chart -->
+    <div class="bg-dark-800/50 border border-dark-700 rounded-2xl p-6">
+        <h3 class="font-bold text-white mb-4">User Growth (Last 30 Days)</h3>
+        <div class="h-64">
+            <canvas id="userGrowthChart"></canvas>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Revenue Chart
+    const revenueData = {{ monthly_revenue|safe }};
+    if (revenueData.length > 0) {
+        new Chart(document.getElementById('revenueChart'), {
+            type: 'line',
+            data: {
+                labels: revenueData.map(d => {
+                    const date = new Date(d.month);
+                    return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+                }),
+                datasets: [{
+                    label: 'Revenue (₱)',
+                    data: revenueData.map(d => parseFloat(d.revenue) || 0),
+                    borderColor: '#0ea5e9',
+                    backgroundColor: 'rgba(14, 165, 233, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
+                    y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }
+                }
+            }
+        });
+    }
+    
+    // Payment Method Chart
+    const paymentData = {{ orders_by_payment|safe }};
+    if (paymentData.length > 0) {
+        const paymentLabels = {
+            'cod': 'Cash on Delivery',
+            'direct_gcash': 'GCash',
+            'direct_maya': 'Maya',
+            'paymongo': 'PayMongo'
+        };
+        new Chart(document.getElementById('paymentChart'), {
+            type: 'doughnut',
+            data: {
+                labels: paymentData.map(d => paymentLabels[d.payment_method] || d.payment_method),
+                datasets: [{
+                    data: paymentData.map(d => d.count),
+                    backgroundColor: ['#0ea5e9', '#10b981', '#8b5cf6', '#f59e0b'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: { color: '#e2e8f0', padding: 20 }
+                    }
+                }
+            }
+        });
+    }
+    
+    // User Growth Chart
+    const userGrowthData = {{ user_growth|safe }};
+    if (userGrowthData.length > 0) {
+        new Chart(document.getElementById('userGrowthChart'), {
+            type: 'bar',
+            data: {
+                labels: userGrowthData.map(d => {
+                    const date = new Date(d.date);
+                    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                }),
+                datasets: [{
+                    label: 'New Users',
+                    data: userGrowthData.map(d => d.count),
+                    backgroundColor: '#10b981',
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { display: false }, ticks: { color: '#94a3b8' } },
+                    y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8', stepSize: 1 } }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

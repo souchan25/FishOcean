@@ -1,0 +1,130 @@
+{% extends 'store/base.html' %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-12">
+    
+    <!-- Hero -->
+    <div class="text-center space-y-4 py-12">
+        <h1 class="text-5xl font-bold text-gray-800">About FishCurrent</h1>
+        <p class="text-xl text-gray-600">Bridging Communities, Empowering Fisherfolk</p>
+    </div>
+
+    <!-- Mission -->
+    <div class="bg-gradient-to-br from-blue-50 to-cyan-50 p-8 rounded-2xl border border-blue-100">
+        <h2 class="text-2xl font-bold text-gray-800 mb-4">Our Mission</h2>
+        <p class="text-lg text-gray-700 leading-relaxed">
+            FishCurrent was created to directly connect fisherfolk from Kabankalan and Ilog with customers 
+            who value fresh, locally-sourced seafood. We eliminate middlemen, ensuring fair prices for sellers 
+            and the freshest catches for buyers.
+        </p>
+    </div>
+
+    <!-- Story -->
+    <div class="grid md:grid-cols-2 gap-8 items-center">
+        <div>
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">The Story</h2>
+            <div class="space-y-4 text-gray-700">
+                <p>
+                    In coastal towns like Kabankalan and Ilog, hardworking fisherfolk wake up before dawn 
+                    to bring in the day's catch. Yet many struggle to reach customers directly, relying on 
+                    intermediaries who take a significant cut.
+                </p>
+                <p>
+                    FishCurrent changes that. Our platform gives every seller a digital storefront, chat 
+                    functionality to build customer relationships, and tools to manage inventory—all for free.
+                </p>
+                <p>
+                    For buyers, it means knowing exactly where your fish comes from, chatting with the 
+                    person who caught it, and supporting local economies with every purchase.
+                </p>
+            </div>
+        </div>
+        <div class="bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl p-8 text-white">
+            <h3 class="text-3xl font-bold mb-6">Impact So Far</h3>
+            <div class="space-y-4">
+                <div class="flex items-center space-x-3">
+                    <div class="text-4xl">🐟</div>
+                    <div>
+                        <div class="text-2xl font-bold">1000+ kg</div>
+                        <div class="text-blue-100">Fresh fish sold</div>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <div class="text-4xl">👨‍🌾</div>
+                    <div>
+                        <div class="text-2xl font-bold">50+ Sellers</div>
+                        <div class="text-blue-100">Empowered fisherfolk</div>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <div class="text-4xl">⭐</div>
+                    <div>
+                        <div class="text-2xl font-bold">4.8/5.0</div>
+                        <div class="text-blue-100">Average rating</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Values -->
+    <div>
+        <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Our Values</h2>
+        <div class="grid md:grid-cols-3 gap-6">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <div class="text-4xl mb-3">🤝</div>
+                <h3 class="font-bold text-gray-800 mb-2">Community First</h3>
+                <p class="text-sm text-gray-600">
+                    We prioritize the well-being of local fisherfolk and their families above all else.
+                </p>
+            </div>
+            
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <div class="text-4xl mb-3">🌊</div>
+                <h3 class="font-bold text-gray-800 mb-2">Freshness Guaranteed</h3>
+                <p class="text-sm text-gray-600">
+                    Every product is caught fresh daily. No frozen imports, just local ocean goodness.
+                </p>
+            </div>
+            
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <div class="text-4xl mb-3">💚</div>
+                <h3 class="font-bold text-gray-800 mb-2">Sustainable Practices</h3>
+                <p class="text-sm text-gray-600">
+                    We encourage responsible fishing methods that protect marine ecosystems.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Team -->
+    <div class="bg-gray-50 p-8 rounded-2xl">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Meet the Developer</h2>
+        <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-sm text-center">
+            <div class="w-24 h-24 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-full mx-auto mb-4 flex items-center justify-center text-white text-3xl font-bold">
+                FC
+            </div>
+            <h3 class="font-bold text-gray-800 text-lg">FishCurrent Team</h3>
+            <p class="text-gray-600 text-sm mb-4">Platform Developer</p>
+            <p class="text-gray-700 text-sm">
+                Built with Django & Tailwind CSS to empower local communities through technology.
+            </p>
+        </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="text-center py-12 space-y-4">
+        <h2 class="text-3xl font-bold text-gray-800">Join the Movement</h2>
+        <p class="text-gray-600">Help us support local fisherfolk while enjoying the freshest seafood</p>
+        <div class="flex justify-center gap-4">
+            <a href="{% url 'store:product_list' %}" class="bg-blue-600 text-white px-8 py-3 rounded-full font-bold hover:bg-blue-700 transition">
+                Browse Marketplace
+            </a>
+            <a href="{% url 'core:contact' %}" class="bg-gray-100 text-gray-800 px-8 py-3 rounded-full font-bold hover:bg-gray-200 transition">
+                Contact Us
+            </a>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

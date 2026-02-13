@@ -1,0 +1,58 @@
+{% extends 'store/base.html' %}
+
+{% block content %}
+<div class="max-w-md mx-auto">
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+        <div class="bg-blue-600 px-6 py-4 text-white">
+            <h1 class="text-xl font-bold">Complete Payment</h1>
+            <p class="text-blue-100 text-sm">Send GCash/Maya to the seller.</p>
+        </div>
+
+        <div class="p-6">
+            <!-- QR Display -->
+            <div class="text-center mb-6">
+                <p class="text-sm text-gray-500 mb-2">Scan this QR code to pay <b>₱{{ order.total_amount }}</b></p>
+                
+                <div class="flex justify-center space-x-4">
+                    {% if order.payment_method == 'direct_gcash' and order.seller.seller_profile.gcash_qr_image %}
+                         <div class="bg-gray-100 p-2 rounded-lg border">
+                            <img src="{{ order.seller.seller_profile.gcash_qr_image.url }}" class="w-48 h-48 object-contain">
+                            <p class="text-xs font-bold text-blue-600 mt-1">GCash</p>
+                         </div>
+                    {% elif order.payment_method == 'direct_maya' and order.seller.seller_profile.maya_qr_image %}
+                        <div class="bg-gray-100 p-2 rounded-lg border">
+                            <img src="{{ order.seller.seller_profile.maya_qr_image.url }}" class="w-48 h-48 object-contain">
+                             <p class="text-xs font-bold text-green-600 mt-1">Maya</p>
+                         </div>
+                    {% else %}
+                        <div class="bg-yellow-50 text-yellow-800 p-4 rounded-lg text-sm">
+                            Seller hasn't uploaded a QR Code yet. Please contact them directly.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Upload Form -->
+            <form method="POST" enctype="multipart/form-data" class="space-y-4">
+                {% csrf_token %}
+                
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Upload Receipt / Screenshot</label>
+                    <input type="file" name="proof" class="w-full text-sm text-gray-500
+                        file:mr-4 file:py-2 file:px-4
+                        file:rounded-full file:border-0
+                        file:text-sm file:font-semibold
+                        file:bg-blue-50 file:text-blue-700
+                        hover:file:bg-blue-100
+                    " required>
+                    <p class="text-xs text-gray-400 mt-1">Make sure the reference number is visible.</p>
+                </div>
+
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow transition">
+                    Submit Proof
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,113 @@
+{% extends 'custom_admin/base.html' %}
+
+{% block title %}Send Notification{% endblock %}
+{% block page_title %}Send Notification{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <!-- Header -->
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-white">Send Notification</h1>
+        <p class="text-dark-400 mt-1">Broadcast a notification to users</p>
+    </div>
+    
+    <!-- Form -->
+    <div class="bg-dark-800/50 border border-dark-700 rounded-2xl p-6">
+        <form method="POST" class="space-y-6">
+            {% csrf_token %}
+            
+            <!-- Recipient Type -->
+            <div>
+                <label class="block text-sm font-medium text-dark-300 mb-3">Send To</label>
+                <div class="grid grid-cols-3 gap-3">
+                    <label class="relative cursor-pointer">
+                        <input type="radio" name="recipient_type" value="all" class="peer sr-only" checked>
+                        <div class="p-4 border-2 border-dark-600 rounded-xl text-center peer-checked:border-admin-500 peer-checked:bg-admin-500/10 transition">
+                            <span class="text-2xl block mb-2">👥</span>
+                            <span class="text-white font-medium">All Users</span>
+                        </div>
+                    </label>
+                    <label class="relative cursor-pointer">
+                        <input type="radio" name="recipient_type" value="buyers" class="peer sr-only">
+                        <div class="p-4 border-2 border-dark-600 rounded-xl text-center peer-checked:border-admin-500 peer-checked:bg-admin-500/10 transition">
+                            <span class="text-2xl block mb-2">🛒</span>
+                            <span class="text-white font-medium">Buyers Only</span>
+                        </div>
+                    </label>
+                    <label class="relative cursor-pointer">
+                        <input type="radio" name="recipient_type" value="sellers" class="peer sr-only">
+                        <div class="p-4 border-2 border-dark-600 rounded-xl text-center peer-checked:border-admin-500 peer-checked:bg-admin-500/10 transition">
+                            <span class="text-2xl block mb-2">🏪</span>
+                            <span class="text-white font-medium">Sellers Only</span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            
+            <!-- Title -->
+            <div>
+                <label class="block text-sm font-medium text-dark-300 mb-2">Notification Title</label>
+                <input type="text" name="title" required maxlength="200"
+                       class="w-full px-4 py-3 bg-dark-900 border border-dark-600 rounded-xl text-white placeholder-dark-400 focus:ring-admin-500 focus:border-admin-500"
+                       placeholder="e.g., 🎉 Big Sale This Weekend!">
+            </div>
+            
+            <!-- Message -->
+            <div>
+                <label class="block text-sm font-medium text-dark-300 mb-2">Message</label>
+                <textarea name="message" required rows="4"
+                          class="w-full px-4 py-3 bg-dark-900 border border-dark-600 rounded-xl text-white placeholder-dark-400 focus:ring-admin-500 focus:border-admin-500"
+                          placeholder="Write your notification message here..."></textarea>
+            </div>
+            
+            <!-- Preview -->
+            <div class="bg-dark-900/50 rounded-xl p-4 border border-dark-600">
+                <p class="text-dark-500 text-xs uppercase tracking-wider mb-2">Preview</p>
+                <div class="flex items-start gap-3">
+                    <div class="w-10 h-10 rounded-full bg-admin-500/20 flex items-center justify-center text-admin-400">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                        </svg>
+                    </div>
+                    <div class="flex-1">
+                        <p class="font-medium text-white" id="previewTitle">Your notification title</p>
+                        <p class="text-dark-400 text-sm mt-1" id="previewMessage">Your notification message will appear here...</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Submit -->
+            <div class="flex gap-4">
+                <a href="{% url 'custom_admin:dashboard' %}" class="flex-1 px-6 py-3 bg-dark-700 hover:bg-dark-600 text-white rounded-xl text-center font-medium transition">
+                    Cancel
+                </a>
+                <button type="submit" class="flex-1 px-6 py-3 bg-admin-500 hover:bg-admin-600 text-white rounded-xl font-medium transition flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                    </svg>
+                    Send Notification
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const titleInput = document.querySelector('input[name="title"]');
+    const messageInput = document.querySelector('textarea[name="message"]');
+    const previewTitle = document.getElementById('previewTitle');
+    const previewMessage = document.getElementById('previewMessage');
+    
+    titleInput.addEventListener('input', function() {
+        previewTitle.textContent = this.value || 'Your notification title';
+    });
+    
+    messageInput.addEventListener('input', function() {
+        previewMessage.textContent = this.value || 'Your notification message will appear here...';
+    });
+});
+</script>
+{% endblock %}
