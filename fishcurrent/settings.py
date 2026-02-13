@@ -95,6 +95,16 @@ WSGI_APPLICATION = 'fishcurrent.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
+import sys
+
+database_url = os.getenv('DATABASE_URL')
+if database_url:
+    print(f"Render Debug: DATABASE_URL is set. Length: {len(database_url)}", file=sys.stderr)
+    # Fix for common Render issue where variable might be malformed
+    if database_url.startswith('://'):
+        print("Render Critical: DATABASE_URL starts with '://' (missing scheme). Ignoring it.", file=sys.stderr)
+        os.environ.pop('DATABASE_URL', None)
+
 DATABASES = {
     'default': dj_database_url.config(
         default='sqlite:///db.sqlite3',
