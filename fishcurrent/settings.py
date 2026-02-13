@@ -96,21 +96,48 @@ WSGI_APPLICATION = 'fishcurrent.wsgi.application'
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
 import sys
-
-database_url = os.getenv('DATABASE_URL')
-if database_url:
-    print(f"Render Debug: DATABASE_URL is set. Length: {len(database_url)}", file=sys.stderr)
-    # Fix for common Render issue where variable might be malformed
-    if database_url.startswith('://'):
-        print("Render Critical: DATABASE_URL starts with '://' (missing scheme). Ignoring it.", file=sys.stderr)
-        os.environ.pop('DATABASE_URL', None)
+import dj_database_url
 
 DATABASES = {
-    'default': dj_database_url.config(
-        default='sqlite:///db.sqlite3',
-        conn_max_age=600
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
 }
+
+database_url = os.getenv('DATABASE_URL')
+
+if database_url:
+    # Clean up the URL
+    database_url = database_url.strip()
+    
+    # Handle accidentally pasted psql command (e.g. "psql 'postgresql://...'")
+    if database_url.startswith("psql"):
+        parts = database_url.split()
+        if len(parts) > 1:
+            database_url = parts[1]
+    
+    # Handle quoted strings just in case
+    if database_url.startswith('"') and database_url.endswith('"'):
+        database_url = database_url[1:-1]
+    elif database_url.startswith("'") and database_url.endswith("'"):
+        database_url = database_url[1:-1]
+    
+    print(f"Render Debug: Processing DATABASE_URL. Length: {len(database_url)}", file=sys.stderr)
+    print(f"Render Debug: Start of URL: {database_url[:15]}...", file=sys.stderr)
+
+    # Convert postgresql:// to postgres:// implementation if needed
+    if database_url.startswith('postgresql://'):
+        database_url = database_url.replace('postgresql://', 'postgres://', 1)
+    
+    try:
+        db_config = dj_database_url.parse(database_url, conn_max_age=600)
+        DATABASES['default'] = db_config
+        print("Render Debug: Successfully configured database.", file=sys.stderr)
+    except Exception as e:
+        print(f"Render Critical: Failed to parse DATABASE_URL: {e}", file=sys.stderr)
+        # Fallback to sqlite is already set above
+
 
 
 # Password validation
